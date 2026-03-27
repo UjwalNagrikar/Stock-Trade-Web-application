@@ -1,0 +1,95 @@
+version: "3.9"
+
+# ============================================================
+# docker-compose.yml — UNiverse Capital full-stack
+#
+# Services:
+#   db        — MySQL 8.0 with persistent volume
+#   api       — Flask + Gunicorn backend
+#   frontend  — Nginx serving the Vite-built React app
+#
+# Usage (development / staging):
+#   cp backend/.env.example backend/.env   # fill in secrets
+#   docker compose up --build
+#
+# The API is reachable at http://localhost:5000/api
+# The site is reachable at http://localhost:8080
+# ============================================================
+
+services:
+
+  # ── MySQL ────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: universe_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass_change_me}
+      MYSQL_DATABASE:      ${MYSQL_DB:-universe_capital}
+      MYSQL_USER:          ${MYSQL_USER:-universe_user}
+      MYSQL_PASSWORD:      ${MYSQL_PASSWORD:-universe_pass}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    ports:
+      - "3306:3306"           # expose for local tooling; remove in production
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "-u", "root", "--password=${MYSQL_ROOT_PASSWORD:-rootpass_change_me}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - internal
+
+  # ── Flask API ─────────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: universe_api
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      FLASK_ENV:     ${FLASK_ENV:-production}
+      MYSQL_HOST:    db          # use service name inside Docker network
+      MYSQL_PORT:    "3306"
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+      - external
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── React frontend (Nginx) ────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile       # existing multi-stage Dockerfile
+    container_name: universe_frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    networks:
+      - external
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  internal:
+    driver: bridge
+  external:
+    driver: bridge
