@@ -1,16 +1,3 @@
-"""
-UNiverse Capital — Flask API Backend
---------------------------------------
-Routes
-  GET  /api/health                  — Health check
-  POST /api/contact                 — Submit contact/enquiry form
-  GET  /api/enquiries               — Admin: paginated list
-  GET  /api/enquiries/<id>          — Admin: single enquiry
-  PATCH /api/enquiries/<id>/status  — Admin: update status + notes
-  DELETE /api/enquiries/<id>        — Admin: soft-delete (archive)
-  POST /api/admin/purge-rate-limit  — Admin: purge stale rate-limit rows
-"""
-
 import logging
 import os
 import threading
@@ -146,8 +133,6 @@ def _register_routes(app: Flask) -> None:
             "full_name":          payload["full_name"].strip(),
             "email":              payload["email"].strip().lower(),
             "phone":              payload.get("phone", "").strip() or None,
-            "investor_type":      payload["investor_type"],
-            "investment_horizon": payload["investment_horizon"],
             "message":            payload.get("message", "").strip() or None,
             "ip_address":         ip,
         }
@@ -354,6 +339,7 @@ def _register_routes(app: Flask) -> None:
     def internal_error(exc):
         log.error("Unhandled exception: %s", exc)
         return jsonify({"success": False, "message": "Internal server error"}), 500
+
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

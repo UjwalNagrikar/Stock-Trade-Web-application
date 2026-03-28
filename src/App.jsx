@@ -326,6 +326,45 @@ body {
 }
 .gold-rule { width: 44px; height: 2px; background: var(--gold); margin: 24px 0; }
 
+/* ── WHAT WE DO ── */
+.wwd-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-top: 52px;
+}
+.wwd-item {
+  background: var(--white);
+  padding: 40px 36px;
+  transition: background 0.25s var(--ease);
+  cursor: default;
+}
+.wwd-item:hover { background: var(--off); }
+.wwd-num {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.wwd-title {
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--navy);
+  margin-bottom: 14px;
+  line-height: 1.3;
+}
+.wwd-body {
+  font-family: var(--sans);
+  font-size: 0.81rem;
+  line-height: 1.85;
+  color: var(--text2);
+}
+
 /* ── ABOUT ── */
 .about { background: var(--off); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .about-grid {
@@ -454,8 +493,7 @@ body {
 .fg { display: flex; flex-direction: column; gap: 6px; }
 .fg label { font-family: var(--sans); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.03em; color: var(--text2); }
 .fg input,
-.fg textarea,
-.fg select {
+.fg textarea {
   font-family: var(--sans);
   font-size: 0.87rem;
   color: var(--text);
@@ -468,9 +506,8 @@ body {
   border-radius: 0;
   width: 100%;
 }
-.fg input:focus, .fg textarea:focus, .fg select:focus { border-color: var(--navy); background: var(--white); }
+.fg input:focus, .fg textarea:focus { border-color: var(--navy); background: var(--white); }
 .fg textarea { resize: vertical; min-height: 110px; font-family: var(--body); line-height: 1.6; }
-.fg select { cursor: pointer; }
 .ffoot { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-top: 4px; }
 .fprivacy { font-family: var(--sans); font-size: 0.7rem; color: var(--text3); line-height: 1.5; max-width: 280px; }
 .fsub {
@@ -526,11 +563,12 @@ body {
 @media (max-width: 1024px) {
   .header-inner, .si, .hero-content, .footer-main, .footer-bot { padding-left: 32px; padding-right: 32px; }
   .hero-strip-inner { padding: 0 32px; grid-template-columns: repeat(2,1fr); }
+  .wwd-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 768px) {
   .nav-primary, .nav-sep { display: none; }
   .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 44px; }
-  .markets-grid, .princ-grid { grid-template-columns: 1fr; }
+  .markets-grid, .princ-grid, .wwd-grid { grid-template-columns: 1fr; }
   .frow { grid-template-columns: 1fr; }
   .footer-main { grid-template-columns: 1fr 1fr; }
   .hero-strip-inner { grid-template-columns: 1fr 1fr; }
@@ -573,7 +611,6 @@ function useRevealObserver() {
       },
       { threshold: 0.1 }
     );
-    // Small delay to ensure DOM is painted
     const timer = setTimeout(() => {
       document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
     }, 50);
@@ -587,10 +624,9 @@ function useRevealObserver() {
 // ─── Header ───────────────────────────────────────────────────────────────────
 function Header({ scrolled, activeSection }) {
   const navLinks = [
-    { href: "#what-we-do", label: "What we do" },
-    { href: "#about", label: "About" },
-    { href: "#markets", label: "Markets" },
-    { href: "#contact", label: "Contact" },
+    { href: "#what-we-do", label: "What We Do" },
+    { href: "#about",      label: "About"       },
+    { href: "#contact",    label: "Contact"      },
   ];
 
   return (
@@ -638,10 +674,9 @@ function Header({ scrolled, activeSection }) {
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 function Hero() {
   const strips = [
-    { lbl: "Founded", val: "Nagpur, India · 2024" },
-    { lbl: "Strategy Type", val: "100% Systematic" },
-    { lbl: "Markets", val: "India · Global Digital Assets" },
-    { lbl: "Discretionary Bias", val: "None" },
+    { lbl: "Strategy Type",      val: "100% Systematic"            },
+    { lbl: "Markets",            val: "India · Global Digital Assets" },
+    { lbl: "Discretionary Bias", val: "None"                       },
   ];
 
   return (
@@ -649,7 +684,7 @@ function Hero() {
       <div className="hero-bg" />
       <div className="hero-content">
         <div className="hero-label">
-          Quantitative Investment Management &nbsp;·&nbsp; Nagpur, India
+          Quantitative Investment Management 
         </div>
         <h1 className="hero-headline">
           Systematic Research.
@@ -680,6 +715,79 @@ function Hero() {
             <div className="strip-item" key={i}>
               <div className="strip-lbl">{s.lbl}</div>
               <div className="strip-val">{s.val}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── What We Do ───────────────────────────────────────────────────────────────
+function WhatWeDo() {
+  const activities = [
+    {
+      num: "01",
+      title: "Strategy Research & Development",
+      body: "We design, test, and validate systematic trading strategies from first principles. Every hypothesis is subjected to rigorous statistical testing across multiple market regimes before any capital is allocated. Our research pipeline combines price action analysis, volatility modelling, and structural market dynamics — with a strict focus on out-of-sample robustness over in-sample curve fitting.",
+    },
+    {
+      num: "02",
+      title: "Systematic Execution",
+      body: "All order generation and position management is rule-based and fully automated. We remove human discretion from the execution loop entirely — eliminating emotional bias, execution slippage from hesitation, and inconsistency across trades. Our systems are designed to execute with precision and consistency regardless of market conditions or news flow.",
+    },
+    {
+      num: "03",
+      title: "Quantitative Risk Management",
+      body: "Risk is not a constraint we work around — it is the foundation every strategy is built on. We apply position sizing based on volatility-adjusted risk budgets, enforce hard drawdown limits at the strategy and portfolio level, and monitor real-time exposure across instruments and correlations. Capital preservation governs every decision we make.",
+    },
+    {
+      num: "04",
+      title: "Portfolio Construction",
+      body: "We construct portfolios by combining uncorrelated, individually validated strategies rather than concentrating exposure in a single model. Diversification across timeframes, instruments, and market structures reduces dependence on any one source of edge and smooths the overall return profile across different market environments.",
+    },
+    {
+      num: "05",
+      title: "Infrastructure & Research Technology",
+      body: "We build and maintain our own research, backtesting, and execution infrastructure. This includes data pipelines for Indian equity and derivatives markets, historical tick and OHLCV datasets, Monte Carlo simulation frameworks for strategy stress-testing, and full transaction cost modelling including brokerage, STT, stamp duty, and slippage.",
+    },
+    {
+      num: "06",
+      title: "Continuous Improvement",
+      body: "Markets evolve, and so do our models. We operate a continuous research cycle — monitoring live strategy performance against historical expectations, identifying regime shifts, and systematically evaluating new strategy hypotheses. We do not rely on a single static edge; we build a living research process designed to adapt with the market.",
+    },
+  ];
+
+  return (
+    <section
+      className="section"
+      id="what-we-do"
+      style={{ background: "var(--white)", borderBottom: "1px solid var(--border)" }}
+    >
+      <div className="si">
+        <div className="sec-lbl reveal">What We Do</div>
+        <h2 className="sec-title reveal">
+          How we research, build,
+          <br />
+          and <em>deploy capital</em> systematically.
+        </h2>
+        <div className="gold-rule reveal" />
+        <p className="sec-intro reveal">
+          Every activity at UNiverse Capital is anchored in one principle —
+          decisions driven entirely by data, process, and evidence. Here is how
+          that translates into practice.
+        </p>
+
+        <div className="wwd-grid">
+          {activities.map((item, i) => (
+            <div
+              className="wwd-item reveal"
+              key={i}
+              style={{ transitionDelay: `${(i % 3) * 0.08}s` }}
+            >
+              <div className="wwd-num">{item.num}</div>
+              <div className="wwd-title">{item.title}</div>
+              <div className="wwd-body">{item.body}</div>
             </div>
           ))}
         </div>
@@ -868,18 +976,17 @@ function Principles() {
   );
 }
 
-const HORIZONS = ["1 – 2 Years", "2 – 5 Years", "5+ Years"];
-
+// ─── Contact ──────────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
   full_name: "",
-  email: "",
-  phone: "",
-  message: "",
+  email:     "",
+  phone:     "",
+  message:   "",
 };
 
 function Contact() {
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [status, setStatus] = useState("idle"); // idle | submitting | success | error
+  const [form, setForm]       = useState(EMPTY_FORM);
+  const [status, setStatus]   = useState("idle"); // idle | submitting | success | error
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleChange = (e) => {
@@ -919,7 +1026,7 @@ function Contact() {
     }
   };
 
-  const isSuccess = status === "success";
+  const isSuccess    = status === "success";
   const isSubmitting = status === "submitting";
 
   return (
@@ -1000,17 +1107,17 @@ function Contact() {
                 />
               </div>
               <div className="fg">
-                <label>Phone Number *</label>
+                <label>Phone Number</label>
                 <input
                   type="tel"
                   name="phone"
                   placeholder="+91 00000 00000"
                   value={form.phone}
                   onChange={handleChange}
-                  required
                 />
               </div>
             </div>
+
             <div className="fg">
               <label>Message</label>
               <textarea
@@ -1059,37 +1166,29 @@ function Footer() {
             <div className="brand-icon">
               <svg
                 viewBox="0 0 24 24"
-                style={{
-                  width: 18,
-                  height: 18,
-                  fill: "none",
-                  stroke: "#d4aa55",
-                  strokeWidth: 1.5,
-                }}
+                style={{ width: 18, height: 18, fill: "none", stroke: "#d4aa55", strokeWidth: 1.5 }}
               >
                 <polygon points="12,3 22,20 2,20" />
               </svg>
             </div>
             <div className="brand-text">
               <div className="brand-name" style={{ color: "#fff" }}>
-                <em style={{ color: "#d4aa55", fontStyle: "normal" }}>UN</em>
-                iverse Capital
+                <em style={{ color: "#d4aa55", fontStyle: "normal" }}>UN</em>iverse Capital
               </div>
               <div className="brand-sub">Quantitative Investment Management</div>
             </div>
           </a>
           <p className="fb-desc">
             An early-stage quantitative trading firm applying systematic research
-            and disciplined risk management to Indian and global financial
-            markets.
+            and disciplined risk management to Indian and global financial markets.
           </p>
         </div>
 
         <div className="fc">
           <h4>Firm</h4>
           <ul>
+            <li><a href="#what-we-do">What We Do</a></li>
             <li><a href="#about">About Us</a></li>
-            <li><a href="#markets">Markets</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
         </div>
@@ -1120,8 +1219,8 @@ function Footer() {
         <p className="fdisc">
           This website is for informational purposes only and does not constitute
           an offer, solicitation, or recommendation to invest. Past performance is
-          not indicative of future results. All investment activities involve
-          risk. UNiverse Capital is an early-stage firm.
+          not indicative of future results. All investment activities involve risk.
+          UNiverse Capital is an early-stage firm.
         </p>
       </div>
     </footer>
@@ -1130,7 +1229,7 @@ function Footer() {
 
 // ─── App (Root) ───────────────────────────────────────────────────────────────
 export default function App() {
-  const [scrolled, setScrolled] = useState(false);
+  const [scrolled, setScrolled]           = useState(false);
   const [activeSection, setActiveSection] = useState("");
 
   // Inject CSS
@@ -1163,6 +1262,7 @@ export default function App() {
     <>
       <Header scrolled={scrolled} activeSection={activeSection} />
       <Hero />
+      <WhatWeDo />
       <About />
       <Markets />
       <Principles />
