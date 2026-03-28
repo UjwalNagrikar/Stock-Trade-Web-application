@@ -1163,14 +1163,9 @@ function Footer() {
       <div className="footer-main">
         <div>
           <a href="#" className="brand" style={{ textDecoration: "none" }}>
-            <div className="brand-icon">
-              <svg
-                viewBox="0 0 24 24"
-                style={{ width: 18, height: 18, fill: "none", stroke: "#d4aa55", strokeWidth: 1.5 }}
-              >
-                <polygon points="12,3 22,20 2,20" />
-              </svg>
-            </div>
+            <div className="brand-icon" style={{ background: "transparent", width: 38, height: 38 }}>
+  <img src="/company.png" alt="UNiverse Capital" style={{ width: 38, height: 38, objectFit: "contain" }} />
+</div>
             <div className="brand-text">
               <div className="brand-name" style={{ color: "#fff" }}>
                 <em style={{ color: "#d4aa55", fontStyle: "normal" }}>UN</em>iverse Capital
@@ -1254,7 +1249,22 @@ export default function App() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
+// ─── Brand (shared by Header + Footer) ───────────────────────────────────────
+function Brand({ light = false }) {
+  return (
+    <a href="#" className="brand" style={{ textDecoration: "none" }}>
+      <div className="brand-icon" style={light ? { background: "transparent" } : {}}>
+        <TriangleIcon />
+      </div>
+      <div className="brand-text">
+        <div className="brand-name" style={light ? { color: "#fff" } : {}}>
+          <em style={light ? { color: "#d4aa55", fontStyle: "normal" } : {}}>UN</em>iverse Capital
+        </div>
+        <div className="brand-sub">Quantitative Investment Management</div>
+      </div>
+    </a>
+  );
+}
   // Reveal observer
   useRevealObserver();
 
