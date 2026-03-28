@@ -1,21 +1,4 @@
 version: "3.9"
-
-# ============================================================
-# docker-compose.yml — UNiverse Capital full-stack
-#
-# Services:
-#   db        — MySQL 8.0 with persistent volume
-#   api       — Flask + Gunicorn backend
-#   frontend  — Nginx serving the Vite-built React app
-#
-# Usage (development / staging):
-#   cp backend/.env.example backend/.env   # fill in secrets
-#   docker compose up --build
-#
-# The API is reachable at http://localhost:5000/api
-# The site is reachable at http://localhost:8080
-# ============================================================
-
 services:
 
   # ── MySQL ────────────────────────────────────────────────────

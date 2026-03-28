@@ -1,22 +1,8 @@
--- ============================================================
--- schema.sql  --  UNiverse Capital table definitions
---
--- The database is created automatically by db.py before this
--- file runs, so there is no CREATE DATABASE or USE statement
--- here.  Every statement is idempotent (IF NOT EXISTS /
--- INSERT IGNORE) -- safe to re-execute on every startup.
--- ============================================================
-
--- ---- enquiries ---------------------------------------------
 CREATE TABLE IF NOT EXISTS enquiries (
     id                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     full_name           VARCHAR(120)    NOT NULL,
     email               VARCHAR(254)    NOT NULL,
     phone               VARCHAR(25)              DEFAULT NULL,
-    investor_type       VARCHAR(60)     NOT NULL
-                            COMMENT 'Quant / Developer | Prop Trader / Fund Manager | Mentor / Advisor | Early Stage Investor | Interested / Curious',
-    investment_horizon  VARCHAR(30)     NOT NULL
-                            COMMENT '1-2 Years | 2-5 Years | 5+ Years',
     message             TEXT                     DEFAULT NULL,
     ip_address          VARCHAR(45)              DEFAULT NULL COMMENT 'IPv4 or IPv6',
     user_agent          VARCHAR(512)             DEFAULT NULL,
@@ -31,7 +17,6 @@ CREATE TABLE IF NOT EXISTS enquiries (
     INDEX idx_email         (email),
     INDEX idx_submitted_at  (submitted_at),
     INDEX idx_status        (status),
-    INDEX idx_investor_type (investor_type)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci

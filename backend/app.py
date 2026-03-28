@@ -98,24 +98,21 @@ def _register_routes(app: Flask) -> None:
         cur = db.cursor()
         try:
             cur.execute(
-                """
-                INSERT INTO enquiries
-                    (full_name, email, phone, investor_type,
-                     investment_horizon, message, ip_address, user_agent)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    payload["full_name"].strip(),
-                    payload["email"].strip().lower(),
-                    payload.get("phone", "").strip() or None,
-                    payload["investor_type"],
-                    payload["investment_horizon"],
-                    payload.get("message", "").strip() or None,
-                    ip,
-                    (request.user_agent.string[:512]
-                     if request.user_agent else None),
-                ),
-            )
+    """
+    INSERT INTO enquiries
+        (full_name, email, phone, message, ip_address, user_agent)
+    VALUES (%s, %s, %s, %s, %s, %s)
+    """,
+    (
+        payload["full_name"].strip(),
+        payload["email"].strip().lower(),
+        payload.get("phone", "").strip() or None,
+        payload.get("message", "").strip() or None,
+        ip,
+        (request.user_agent.string[:512]
+         if request.user_agent else None),
+    ),
+)
             db.commit()
             enquiry_id = cur.lastrowid
             log.info("New enquiry #%d from %s", enquiry_id, payload["email"])
@@ -128,14 +125,14 @@ def _register_routes(app: Flask) -> None:
             cur.close()
 
         # ── Send emails asynchronously so the response is instant ─────────────
-        enquiry_data = {
-            "id":                 enquiry_id,
-            "full_name":          payload["full_name"].strip(),
-            "email":              payload["email"].strip().lower(),
-            "phone":              payload.get("phone", "").strip() or None,
-            "message":            payload.get("message", "").strip() or None,
-            "ip_address":         ip,
-        }
+      enquiry_data = {
+    "id":        enquiry_id,
+    "full_name": payload["full_name"].strip(),
+    "email":     payload["email"].strip().lower(),
+    "phone":     payload.get("phone", "").strip() or None,
+    "message":   payload.get("message", "").strip() or None,
+    "ip_address": ip,
+}
 
         def _send_emails():
             send_enquiry_notification(enquiry_data)
