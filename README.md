@@ -207,7 +207,3 @@ To disable, leave `SMTP_HOST` empty.
 | `WEB_CONCURRENCY`   | `2×CPU+1`                        | Gunicorn worker count override     |
 
 
-
-these  i need remove from website from 
-Nature of Interest *
-Investment Horizon *

@@ -868,23 +868,12 @@ function Principles() {
   );
 }
 
-// ─── Contact ──────────────────────────────────────────────────────────────────
-const INVESTOR_TYPES = [
-  "Quant / Developer",
-  "Prop Trader / Fund Manager",
-  "Mentor / Advisor",
-  "Early Stage Investor",
-  "Interested / Curious",
-];
-
 const HORIZONS = ["1 – 2 Years", "2 – 5 Years", "5+ Years"];
 
 const EMPTY_FORM = {
   full_name: "",
   email: "",
   phone: "",
-  investor_type: "",
-  investment_horizon: "",
   message: "",
 };
 
@@ -1022,45 +1011,6 @@ function Contact() {
                 />
               </div>
             </div>
-
-            <div className="fg">
-              <label>Nature of Interest *</label>
-              <select
-                name="investor_type"
-                value={form.investor_type}
-                onChange={handleChange}
-                required
-              >
-                <option value="" disabled>
-                  Please select —
-                </option>
-                {INVESTOR_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="fg">
-              <label>Investment Horizon *</label>
-              <select
-                name="investment_horizon"
-                value={form.investment_horizon}
-                onChange={handleChange}
-                required
-              >
-                <option value="" disabled>
-                  Please select —
-                </option>
-                {HORIZONS.map((h) => (
-                  <option key={h} value={h}>
-                    {h}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className="fg">
               <label>Message</label>
               <textarea
