@@ -82,70 +82,67 @@ def _register_routes(app: Flask) -> None:
     # ── Contact form ──────────────────────────────────────────────────────────
     @app.post("/api/contact")
     def contact():
-        # Rate limit: 5 submissions per IP per hour
         ip = request.remote_addr or "unknown"
         try:
             check_rate_limit(ip, "/api/contact", limit=5)
         except RateLimitExceeded as exc:
             return jsonify({"success": False, "message": str(exc)}), 429
 
-        payload = request.get_json(silent=True) or {}
-        errors  = validate_contact_payload(payload)
-        if errors:
-            return jsonify({"success": False, "message": errors[0]}), 422
+    payload = request.get_json(silent=True) or {}
+    errors  = validate_contact_payload(payload)
+    if errors:
+        return jsonify({"success": False, "message": errors[0]}), 422
 
-        db  = get_db()
-        cur = db.cursor()
-        try:
-            cur.execute(
-    """
-    INSERT INTO enquiries
-        (full_name, email, phone, message, ip_address, user_agent)
-    VALUES (%s, %s, %s, %s, %s, %s)
-    """,
-    (
-        payload["full_name"].strip(),
-        payload["email"].strip().lower(),
-        payload.get("phone", "").strip() or None,
-        payload.get("message", "").strip() or None,
-        ip,
-        (request.user_agent.string[:512]
-         if request.user_agent else None),
-    ),
-)
-            db.commit()
-            enquiry_id = cur.lastrowid
-            log.info("New enquiry #%d from %s", enquiry_id, payload["email"])
-        except Exception as exc:
-            db.rollback()
-            log.error("DB insert failed: %s", exc)
-            return jsonify({"success": False,
-                            "message": "Internal error. Please try again."}), 500
-        finally:
-            cur.close()
+    db  = get_db()
+    cur = db.cursor()
+    try:
+        cur.execute(
+            """
+            INSERT INTO enquiries
+                (full_name, email, phone, message, ip_address, user_agent)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (
+                payload["full_name"].strip(),
+                payload["email"].strip().lower(),
+                payload.get("phone", "").strip() or None,
+                payload.get("message", "").strip() or None,
+                ip,
+                (request.user_agent.string[:512]
+                 if request.user_agent else None),
+            ),
+        )
+        db.commit()
+        enquiry_id = cur.lastrowid
+        log.info("New enquiry #%d from %s", enquiry_id, payload["email"])
+    except Exception as exc:
+        db.rollback()
+        log.error("DB insert failed: %s", exc)
+        return jsonify({"success": False,
+                        "message": "Internal error. Please try again."}), 500
+    finally:
+        cur.close()
 
-        # ── Send emails asynchronously so the response is instant ─────────────
-      enquiry_data = {
-    "id":        enquiry_id,
-    "full_name": payload["full_name"].strip(),
-    "email":     payload["email"].strip().lower(),
-    "phone":     payload.get("phone", "").strip() or None,
-    "message":   payload.get("message", "").strip() or None,
-    "ip_address": ip,
-}
+    enquiry_data = {
+        "id":         enquiry_id,
+        "full_name":  payload["full_name"].strip(),
+        "email":      payload["email"].strip().lower(),
+        "phone":      payload.get("phone", "").strip() or None,
+        "message":    payload.get("message", "").strip() or None,
+        "ip_address": ip,
+    }
 
-        def _send_emails():
-            send_enquiry_notification(enquiry_data)
-            send_confirmation_to_enquirer(enquiry_data)
+    def _send_emails():
+        send_enquiry_notification(enquiry_data)
+        send_confirmation_to_enquirer(enquiry_data)
 
-        threading.Thread(target=_send_emails, daemon=True).start()
+    threading.Thread(target=_send_emails, daemon=True).start()
 
-        return jsonify({
-            "success": True,
-            "message": "Enquiry received. We will be in touch within five business days.",
-            "id":      enquiry_id,
-        }), 201
-
+    return jsonify({
+        "success": True,
+        "message": "Enquiry received. We will be in touch within five business days.",
+        "id":      enquiry_id,
+    }), 201
     # ── Admin: list enquiries ─────────────────────────────────────────────────
     @app.get("/api/enquiries")
     def list_enquiries():
