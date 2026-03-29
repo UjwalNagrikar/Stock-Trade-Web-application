@@ -375,10 +375,10 @@ function Contact() {
         setErrorMsg(data.message || "Submission failed. Please try again.");
         setStatus("error");
       }
-    } catch {
-      setStatus("success");
-      setTimeout(() => { setStatus("idle"); setForm(EMPTY_FORM); }, 4000);
-    }
+    } catch (err) {
+      setErrorMsg("Unable to reach the server. Please try again.");
+      setStatus("error");
+}
   };
 
   const isSuccess    = status === "success";
