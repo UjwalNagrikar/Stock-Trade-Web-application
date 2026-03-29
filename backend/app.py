@@ -45,7 +45,6 @@ def create_app(config_name: str | None = None) -> Flask:
 # ── Auth helper ───────────────────────────────────────────────────────────────
 
 def _require_admin(app):
-    """Return (True, None) if the request carries a valid admin token."""
     token = (
         request.args.get("token")
         or request.headers.get("Authorization", "").replace("Bearer ", "").strip()
@@ -88,88 +87,83 @@ def _register_routes(app: Flask) -> None:
         except RateLimitExceeded as exc:
             return jsonify({"success": False, "message": str(exc)}), 429
 
-    payload = request.get_json(silent=True) or {}
-    errors  = validate_contact_payload(payload)
-    if errors:
-        return jsonify({"success": False, "message": errors[0]}), 422
+        payload = request.get_json(silent=True) or {}
+        errors  = validate_contact_payload(payload)
+        if errors:
+            return jsonify({"success": False, "message": errors[0]}), 422
 
-    db  = get_db()
-    cur = db.cursor()
-    try:
-        cur.execute(
-            """
-            INSERT INTO enquiries
-                (full_name, email, phone, message, ip_address, user_agent)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """,
-            (
-                payload["full_name"].strip(),
-                payload["email"].strip().lower(),
-                payload.get("phone", "").strip() or None,
-                payload.get("message", "").strip() or None,
-                ip,
-                (request.user_agent.string[:512]
-                 if request.user_agent else None),
-            ),
-        )
-        db.commit()
-        enquiry_id = cur.lastrowid
-        log.info("New enquiry #%d from %s", enquiry_id, payload["email"])
-    except Exception as exc:
-        db.rollback()
-        log.error("DB insert failed: %s", exc)
-        return jsonify({"success": False,
-                        "message": "Internal error. Please try again."}), 500
-    finally:
-        cur.close()
+        db  = get_db()
+        cur = db.cursor()
+        try:
+            cur.execute(
+                """
+                INSERT INTO enquiries
+                    (full_name, email, phone, message, ip_address, user_agent)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    payload["full_name"].strip(),
+                    payload["email"].strip().lower(),
+                    payload.get("phone", "").strip() or None,
+                    payload.get("message", "").strip() or None,
+                    ip,
+                    (request.user_agent.string[:512] if request.user_agent else None),
+                ),
+            )
+            db.commit()
+            enquiry_id = cur.lastrowid
+            log.info("New enquiry #%d from %s", enquiry_id, payload["email"])
+        except Exception as exc:
+            db.rollback()
+            log.error("DB insert failed: %s", exc)
+            return jsonify({"success": False, "message": "Internal error. Please try again."}), 500
+        finally:
+            cur.close()
 
-    enquiry_data = {
-        "id":         enquiry_id,
-        "full_name":  payload["full_name"].strip(),
-        "email":      payload["email"].strip().lower(),
-        "phone":      payload.get("phone", "").strip() or None,
-        "message":    payload.get("message", "").strip() or None,
-        "ip_address": ip,
-    }
+        enquiry_data = {
+            "id":         enquiry_id,
+            "full_name":  payload["full_name"].strip(),
+            "email":      payload["email"].strip().lower(),
+            "phone":      payload.get("phone", "").strip() or None,
+            "message":    payload.get("message", "").strip() or None,
+            "ip_address": ip,
+        }
 
-    def _send_emails():
-        send_enquiry_notification(enquiry_data)
-        send_confirmation_to_enquirer(enquiry_data)
+        def _send_emails():
+            send_enquiry_notification(enquiry_data)
+            send_confirmation_to_enquirer(enquiry_data)
 
-    threading.Thread(target=_send_emails, daemon=True).start()
+        threading.Thread(target=_send_emails, daemon=True).start()
 
-    return jsonify({
-        "success": True,
-        "message": "Enquiry received. We will be in touch within five business days.",
-        "id":      enquiry_id,
-    }), 201
+        return jsonify({
+            "success": True,
+            "message": "Enquiry received. We will be in touch within five business days.",
+            "id":      enquiry_id,
+        }), 201
+
     # ── Admin: list enquiries ─────────────────────────────────────────────────
     @app.get("/api/enquiries")
     def list_enquiries():
         if not _require_admin(app):
             return jsonify({"success": False, "message": "Unauthorized"}), 401
 
-        page        = max(1, int(request.args.get("page", 1)))
-        per_page    = min(100, max(1, int(request.args.get("per_page", 20))))
-        offset      = (page - 1) * per_page
-        status_filter = request.args.get("status")   # optional filter
+        page          = max(1, int(request.args.get("page", 1)))
+        per_page      = min(100, max(1, int(request.args.get("per_page", 20))))
+        offset        = (page - 1) * per_page
+        status_filter = request.args.get("status")
         search        = request.args.get("q", "").strip()
 
         db  = get_db()
         cur = db.cursor(dictionary=True)
         try:
-            # Build WHERE clause dynamically
-            where_parts = []
-            params      = []
+            where_parts, params = [], []
 
             if status_filter:
                 where_parts.append("status = %s")
                 params.append(status_filter)
 
             if search:
-                where_parts.append(
-                    "(full_name LIKE %s OR email LIKE %s OR phone LIKE %s)"
-                )
+                where_parts.append("(full_name LIKE %s OR email LIKE %s OR phone LIKE %s)")
                 like = f"%{search}%"
                 params.extend([like, like, like])
 
@@ -180,8 +174,8 @@ def _register_routes(app: Flask) -> None:
 
             cur.execute(
                 f"""
-                SELECT id, full_name, email, phone, investor_type,
-                       investment_horizon, message, status, submitted_at, updated_at
+                SELECT id, full_name, email, phone, message,
+                       status, submitted_at, updated_at
                 FROM   enquiries
                 {where_sql}
                 ORDER  BY submitted_at DESC
@@ -217,8 +211,7 @@ def _register_routes(app: Flask) -> None:
         try:
             cur.execute(
                 """
-                SELECT id, full_name, email, phone, investor_type,
-                       investment_horizon, message, status, notes,
+                SELECT id, full_name, email, phone, message, status, notes,
                        ip_address, user_agent, submitted_at, updated_at
                 FROM   enquiries
                 WHERE  id = %s AND status != 'archived'
@@ -244,8 +237,8 @@ def _register_routes(app: Flask) -> None:
         if not _require_admin(app):
             return jsonify({"success": False, "message": "Unauthorized"}), 401
 
-        payload = request.get_json(silent=True) or {}
-        new_status = payload.get("status")
+        payload        = request.get_json(silent=True) or {}
+        new_status     = payload.get("status")
         valid_statuses = {"new", "read", "replied", "archived"}
 
         if not new_status or new_status not in valid_statuses:
@@ -316,7 +309,7 @@ def _register_routes(app: Flask) -> None:
             return jsonify({"success": False, "message": "Unauthorized"}), 401
 
         from rate_limit import purge_old_windows
-        keep_hours = int(request.get_json(silent=True or {}).get("keep_hours", 48))
+        keep_hours = int((request.get_json(silent=True) or {}).get("keep_hours", 48))
         deleted    = purge_old_windows(keep_hours=keep_hours)
         return jsonify({"success": True, "deleted": deleted})
 
@@ -333,7 +326,6 @@ def _register_routes(app: Flask) -> None:
     def internal_error(exc):
         log.error("Unhandled exception: %s", exc)
         return jsonify({"success": False, "message": "Internal server error"}), 500
-
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
