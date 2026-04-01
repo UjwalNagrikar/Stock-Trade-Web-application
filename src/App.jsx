@@ -348,6 +348,7 @@ function Principles() {
 }
 
 // ─── Contact ──────────────────────────────────────────────────────────────────
+// ─── Contact ──────────────────────────────────────────────────────────────────
 const EMPTY_FORM = { full_name: "", email: "", phone: "", message: "" };
 
 function Contact() {
@@ -370,7 +371,6 @@ function Contact() {
       const data = await res.json();
       if (data.success) {
         setStatus("success");
-        setTimeout(() => { setStatus("idle"); setForm(EMPTY_FORM); }, 4000);
       } else {
         setErrorMsg(data.message || "Submission failed. Please try again.");
         setStatus("error");
@@ -378,12 +378,84 @@ function Contact() {
     } catch (err) {
       setErrorMsg("Unable to reach the server. Please try again.");
       setStatus("error");
-}
+    }
   };
 
-  const isSuccess    = status === "success";
   const isSubmitting = status === "submitting";
 
+  // ── Success panel ────────────────────────────────────────────────────────
+  if (status === "success") {
+    return (
+      <section className="section contact" id="contact">
+        <div className="si">
+          <div className="sec-lbl reveal">Contact</div>
+          <h2 className="sec-title reveal">Get in Touch.</h2>
+          <div className="gold-rule reveal" />
+
+          <div style={{
+            marginTop: "52px",
+            padding: "64px 48px",
+            background: "var(--off)",
+            border: "1px solid var(--border)",
+            textAlign: "center",
+            maxWidth: "640px",
+          }}>
+            {/* Gold checkmark */}
+            <div style={{
+              width: "56px", height: "56px",
+              border: "2px solid var(--gold)",
+              borderRadius: "50%",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 28px",
+            }}>
+              <svg viewBox="0 0 24 24" style={{ width: 24, height: 24, stroke: "var(--gold)", fill: "none", strokeWidth: 2 }}>
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+
+            <div style={{
+              fontFamily: "var(--mono)", fontSize: "0.58rem",
+              letterSpacing: "0.28em", textTransform: "uppercase",
+              color: "var(--gold)", marginBottom: "16px",
+            }}>
+              Enquiry Received
+            </div>
+
+            <h3 style={{
+              fontFamily: "var(--serif)", fontSize: "1.8rem",
+              fontWeight: 500, color: "var(--navy)",
+              lineHeight: 1.2, marginBottom: "20px",
+            }}>
+              Thank you for reaching out.
+            </h3>
+
+            <p style={{
+              fontFamily: "var(--body)", fontSize: "1rem",
+              lineHeight: 1.8, color: "var(--text2)",
+              fontWeight: 300, marginBottom: "32px",
+            }}>
+              We have received your enquiry and will be in touch within
+              five business days. For urgent matters, contact us directly at{" "}
+              <a href="mailto:contact@universecapital.in"
+                style={{ color: "var(--navy)", borderBottom: "1px solid var(--border)" }}>
+                contact@universecapital.in
+              </a>.
+            </p>
+
+            <button
+              onClick={() => { setStatus("idle"); setForm(EMPTY_FORM); }}
+              className="btn btn-solid"
+              style={{ margin: "0 auto" }}
+            >
+              Submit Another Enquiry
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // ── Normal form ──────────────────────────────────────────────────────────
   return (
     <section className="section contact" id="contact">
       <div className="si">
@@ -454,10 +526,10 @@ function Contact() {
               </p>
               <button
                 type="submit"
-                className={`fsub${isSuccess ? " success" : ""}`}
-                disabled={isSubmitting || isSuccess}
+                className="fsub"
+                disabled={isSubmitting}
               >
-                {isSuccess ? "Submitted ✓" : isSubmitting ? "Submitting…" : "Submit Inquiry"}
+                {isSubmitting ? "Submitting…" : "Submit Inquiry"}
               </button>
             </div>
           </form>
