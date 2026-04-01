@@ -14,9 +14,11 @@ CREATE TABLE IF NOT EXISTS enquiries (
                                                  ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
-    INDEX idx_email         (email),
+    INDEX idx_full_name     (full_name),
+    INDEX idx_phone        (phone),
     INDEX idx_submitted_at  (submitted_at),
-    INDEX idx_status        (status)
+    INDEX idx_status        (status),
+    FULLTEXT idx_search     (full_name, email, phone)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci

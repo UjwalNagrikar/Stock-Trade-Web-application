@@ -2,7 +2,6 @@ import logging
 import os
 import threading
 from datetime import datetime
-import wsgi
 
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
@@ -18,6 +17,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
 )
+
+VALID_STATUSES = {"new", "read", "replied", "archived"}
 
 
 # ── Application factory ───────────────────────────────────────────────────────
@@ -113,10 +114,10 @@ def _register_routes(app: Flask) -> None:
             )
             db.commit()
             enquiry_id = cur.lastrowid
-            log.info("New enquiry #%d from %s", enquiry_id, payload["email"])
+            log.info(f"New enquiry #{enquiry_id} from {payload['email']}")
         except Exception as exc:
             db.rollback()
-            log.error("DB insert failed: %s", exc)
+            log.error(f"DB insert failed: {exc}")
             return jsonify({"success": False, "message": "Internal error. Please try again."}), 500
         finally:
             cur.close()
@@ -164,9 +165,8 @@ def _register_routes(app: Flask) -> None:
                 params.append(status_filter)
 
             if search:
-                where_parts.append("(full_name LIKE %s OR email LIKE %s OR phone LIKE %s)")
-                like = f"%{search}%"
-                params.extend([like, like, like])
+                where_parts.append("MATCH(full_name, email, phone) AGAINST (%s IN NATURAL LANGUAGE MODE)")
+                params.append(search)
 
             where_sql = ("WHERE " + " AND ".join(where_parts)) if where_parts else ""
 
@@ -240,12 +240,12 @@ def _register_routes(app: Flask) -> None:
 
         payload        = request.get_json(silent=True) or {}
         new_status     = payload.get("status")
-        valid_statuses = {"new", "read", "replied", "archived"}
+        valid_statuses = VALID_STATUSES
 
         if not new_status or new_status not in valid_statuses:
             return jsonify({
                 "success": False,
-                "message": f"status must be one of: {', '.join(sorted(valid_statuses))}",
+                "message": f"status must be one of: {', '.join(sorted(VALID_STATUSES))}",
             }), 422
 
         notes = payload.get("notes")
@@ -266,7 +266,7 @@ def _register_routes(app: Flask) -> None:
             affected = cur.rowcount
         except Exception as exc:
             db.rollback()
-            log.error("Status update failed: %s", exc)
+            log.error(f"Status update failed: {exc}")
             return jsonify({"success": False, "message": "DB error"}), 500
         finally:
             cur.close()
@@ -293,7 +293,7 @@ def _register_routes(app: Flask) -> None:
             affected = cur.rowcount
         except Exception as exc:
             db.rollback()
-            log.error("Archive failed: %s", exc)
+            log.error(f"Archive failed: {exc}")
             return jsonify({"success": False, "message": "DB error"}), 500
         finally:
             cur.close()
@@ -325,7 +325,7 @@ def _register_routes(app: Flask) -> None:
 
     @app.errorhandler(500)
     def internal_error(exc):
-        log.error("Unhandled exception: %s", exc)
+        log.error(f"Unhandled exception: {exc}")
         return jsonify({"success": False, "message": "Internal server error"}), 500
 
 
