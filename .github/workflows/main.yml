@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -45,7 +44,11 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            export KUBECONFIG=$HOME/.kube/config
+
             echo "Deploying version v$VERSION"
+
+            kubectl get nodes
 
             kubectl set image deployment/frontend frontend=$FRONTEND_IMAGE:v$VERSION -n default
             kubectl set image deployment/backend backend=$BACKEND_IMAGE:v$VERSION -n default
