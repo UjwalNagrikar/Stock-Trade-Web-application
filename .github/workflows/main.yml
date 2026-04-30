@@ -43,6 +43,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: VERSION,FRONTEND_IMAGE,BACKEND_IMAGE
           script: |
             export KUBECONFIG=$HOME/.kube/config
 
