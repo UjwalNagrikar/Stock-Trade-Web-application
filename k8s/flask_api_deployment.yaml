@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: your-dockerhub-username/backend:latest
+        image: ujwalnagrikar/backend:v1
         env:
         - name: MYSQL_HOST
           value: mysql
