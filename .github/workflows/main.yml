@@ -38,20 +38,17 @@ jobs:
           docker push $FRONTEND_IMAGE:v$VERSION
           docker push $BACKEND_IMAGE:v$VERSION
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
+      - name: Deploy to Kubernetes via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Deploying version v$VERSION"
 
-      - name: Configure Kubernetes
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+            kubectl set image deployment/frontend frontend=$FRONTEND_IMAGE:v$VERSION -n default
+            kubectl set image deployment/backend backend=$BACKEND_IMAGE:v$VERSION -n default
 
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl set image deployment/frontend frontend=$FRONTEND_IMAGE:v$VERSION -n default
-          kubectl set image deployment/backend backend=$BACKEND_IMAGE:v$VERSION -n default
-
-      - name: Verify Rollout
-        run: |
-          kubectl rollout status deployment/frontend -n default
-          kubectl rollout status deployment/backend -n default
+            kubectl rollout status deployment/frontend -n default
+            kubectl rollout status deployment/backend -n default
