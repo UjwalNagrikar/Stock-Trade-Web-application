@@ -1,5 +1,6 @@
 pipeline {
     agent any
+
     environment {
         DOCKER_USER = "ujwalnagrikar"
         FRONTEND_IMAGE = "ujwalnagrikar/frontend"
@@ -7,11 +8,18 @@ pipeline {
         VERSION = "${BUILD_NUMBER}"
         NAMESPACE = "default"
     }
+
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout Code (main branch)') {
             steps {
-                git 'https://github.com/UjwalNagrikar/Stock-Trade-Web-application.git'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/UjwalNagrikar/Stock-Trade-Web-application.git'
+                    ]]
+                ])
             }
         }
 
@@ -38,7 +46,7 @@ pipeline {
             }
         }
 
-        stage('Push Images') {
+        stage('Push Docker Images') {
             steps {
                 sh """
                 docker push $FRONTEND_IMAGE:v$VERSION
@@ -67,16 +75,18 @@ pipeline {
     }
 
     post {
+
         always {
+            echo "Cleaning up Docker space..."
             sh 'docker system prune -f'
         }
 
         success {
-            echo "Deployment successful 🚀 Version: v${BUILD_NUMBER}"
+            echo "✅ Deployment successful - Version v${BUILD_NUMBER}"
         }
 
         failure {
-            echo "Deployment failed ❌ Rolling back..."
+            echo "❌ Deployment failed - Rolling back..."
 
             sh """
             kubectl rollout undo deployment/frontend -n $NAMESPACE || true
