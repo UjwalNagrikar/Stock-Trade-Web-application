@@ -107,9 +107,8 @@ function Hero() {
       <div className="hero-content">
         <div className="hero-label">Quantitative Investment Management</div>
         <h1 className="hero-headline">
-          Systematic Research.<br />
-          <em>Disciplined</em> Execution.<br />
-          Rigorous Risk.
+          Systematic Thinking<br />
+          <em>Quantitative Edge</em> Consistent Performance<br />
         </h1>
         <p className="hero-body">
           UNiverse Capital applies quantitative methods, statistical modelling,
