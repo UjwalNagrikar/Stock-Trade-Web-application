@@ -15,28 +15,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 🔹 1. Checkout
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # 🔹 2. Versioning
       - name: Set Version
         run: echo "VERSION=${{ github.run_number }}" >> $GITHUB_ENV
 
+      # 🔹 3. Docker Login
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Docker Images
+      # 🔹 4. Build Frontend
+      - name: Build Frontend Image
         run: |
-          docker build -t $FRONTEND_IMAGE:v$VERSION .
-          docker build -t $BACKEND_IMAGE:v$VERSION ./backend
+          docker build --no-cache -t $FRONTEND_IMAGE:v$VERSION .
 
+      # 🔹 5. Build Backend
+      - name: Build Backend Image
+        run: |
+          docker build --no-cache -t $BACKEND_IMAGE:v$VERSION ./backend
+
+      # 🔹 6. Push Images
       - name: Push Docker Images
         run: |
           docker push $FRONTEND_IMAGE:v$VERSION
           docker push $BACKEND_IMAGE:v$VERSION
 
+      # 🔹 7. Deploy to Kubernetes
       - name: Deploy to Kubernetes via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -45,14 +55,22 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: VERSION,FRONTEND_IMAGE,BACKEND_IMAGE
           script: |
+            set -e
+
             export KUBECONFIG=$HOME/.kube/config
 
-            echo "Deploying version v$VERSION"
+            echo "🚀 Deploying version v$VERSION"
 
             kubectl get nodes
 
+            # 🔥 Update images (IMPORTANT)
             kubectl set image deployment/frontend frontend=$FRONTEND_IMAGE:v$VERSION -n default
             kubectl set image deployment/backend backend=$BACKEND_IMAGE:v$VERSION -n default
 
+            # 🔥 Force rollout (ensures update)
+            kubectl rollout restart deployment/frontend -n default
+            kubectl rollout restart deployment/backend -n default
+
+            # 🔍 Verify rollout
             kubectl rollout status deployment/frontend -n default
             kubectl rollout status deployment/backend -n default
