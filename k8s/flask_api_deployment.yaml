@@ -26,12 +26,14 @@ spec:
         env:
         - name: MYSQL_HOST
           value: mysql
-        - name: MYSQL_USER
-          value: universe_user
-        - name: MYSQL_PASSWORD
-          value: universe_pass
-        - name: MYSQL_DATABASE
-          value: universe_capital
+
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "300m"
+            memory: "256Mi"
 
         readinessProbe:
           httpGet:
@@ -46,23 +48,3 @@ spec:
             port: 5000
           initialDelaySeconds: 10
           periodSeconds: 10
-
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "128Mi"
-          limits:
-            cpu: "300m"
-            memory: "256Mi"
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend
-spec:
-  selector:
-    app: backend
-  ports:
-    - port: 5000
-      targetPort: 5000
