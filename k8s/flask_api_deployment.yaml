@@ -4,6 +4,11 @@ metadata:
   name: backend
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: backend
@@ -15,6 +20,9 @@ spec:
       containers:
       - name: backend
         image: ujwalnagrikar/backend:v1
+        ports:
+        - containerPort: 5000
+
         env:
         - name: MYSQL_HOST
           value: mysql
@@ -24,8 +32,29 @@ spec:
           value: universe_pass
         - name: MYSQL_DATABASE
           value: universe_capital
-        ports:
-        - containerPort: 5000
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "300m"
+            memory: "256Mi"
+
 ---
 apiVersion: v1
 kind: Service
